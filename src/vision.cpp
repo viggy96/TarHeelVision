@@ -131,10 +131,10 @@ int main(int argc, char *argv[]) {
       }
     }
     message += "{";
-    message += "'x:'";
+    message += "'x':";
     message += ("'" + std::to_string(largest_rect.x) + "'");
     message += ",";
-    message += "'y:'";
+    message += "'y':";
     message += ("'" + std::to_string(largest_rect.y) + "'");
     message += "}";
 
