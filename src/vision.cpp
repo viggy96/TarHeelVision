@@ -28,9 +28,9 @@ int id_thresh = 0;
 int id_thresh_max = 0;
 int max_thresh = 255;
 int thresh_max = 100;
-int lowR = 0, highR = 255;
-int lowG = 0, highG = 255;
-int lowB = 0, highB = 255;
+int lowH = 0, highH = 179;
+int lowS = 0, highS = 255;
+int lowV = 0, highV = 255;
 int minContourSize = 25;
 double image_t = 0, threshold_t = 0;
 const double PI = 3.14159265358979323846264338328;
@@ -41,7 +41,11 @@ double circularity(double, float);
 
 int main(int argc, char *argv[]) {
   VideoCapture camera;
-  if (argc > 1 && boost::starts_with(argv[1], "http://")) {
+  if (argc < 3) {
+    cout << "Not enough arguments." << endl;
+    cout << "usage: vision camera_stream_address roboRIO_address" << endl;
+    return 1;
+  } else if (argc > 1 && boost::starts_with(argv[1], "http://")) {
     std::string address;
     address.append(argv[1]);
     address.append("video?x.mjpeg");
@@ -49,6 +53,13 @@ int main(int argc, char *argv[]) {
   } else {
     camera = VideoCapture(CV_CAP_ANY);
   }
+
+  boost::asio::io_service io_service;
+  udp::resolver resolver(io_service);
+  udp::resolver::query query(udp::v4(), argv[2], "3331");
+  udp::endpoint receiver_endpoint = *resolver.resolve(query);
+  udp::socket socket(io_service);
+  socket.open(udp::v4());
 
   #pragma omp parallel for
   for (;;) {
@@ -68,19 +79,19 @@ int main(int argc, char *argv[]) {
     namedWindow("Image", CV_WINDOW_AUTOSIZE);
     imshow("Image", frame);
 
-    createTrackbar("LowR", "Image", &lowR, 255); //Hue (0 - 179)
-    createTrackbar("HighR", "Image", &highR, 255);
+    createTrackbar("LowH", "Image", &lowH, 179); //Hue (0 - 179)
+    createTrackbar("HighH", "Image", &highH, 179);
 
-    createTrackbar("LowG", "Image", &lowG, 255); //Saturation (0 - 255)
-    createTrackbar("HighG", "Image", &highG, 255);
+    createTrackbar("LowS", "Image", &lowS, 255); //Saturation (0 - 255)
+    createTrackbar("HighS", "Image", &highS, 255);
 
-    createTrackbar("LowB", "Image", &lowB, 255); //Value (0 - 255)
-    createTrackbar("HighB", "Image", &highB, 255);
+    createTrackbar("LowV", "Image", &lowV, 255); //Value (0 - 255)
+    createTrackbar("HighV", "Image", &highV, 255);
 
-    //#pragma omp task
-    //cvtColor(frame, frame_hsv, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
     #pragma omp task
-    inRange(frame, Scalar(lowB, lowG, lowR), Scalar(highB, highG, highR), frame_thresh); //Threshold the image
+    cvtColor(frame, frame_hsv, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
+    #pragma omp task
+    inRange(frame_hsv, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), frame_thresh); //Threshold the image
 
     namedWindow("Thresholded Image", CV_WINDOW_AUTOSIZE);
     imshow("Thresholded Image", frame_thresh);
@@ -104,6 +115,8 @@ int main(int argc, char *argv[]) {
     double largest_area = -1;
     Point largest_rect;
 
+    message = "";
+
     #pragma omp parallel for simd
     for (int i = 0; i < contours.size(); i++) {
       #pragma omp task
@@ -111,8 +124,21 @@ int main(int argc, char *argv[]) {
       if (area < minContourSize) continue;
 
       Rect rect = boundingRect(contours[i]);
-      bool isRect = (rectangularity(area, rect)) > 85;
+      bool isRect = (rectangularity(area, rect)) > 80;
+      if (isRect && area > largest_area) {
+        largest_area = area;
+        largest_rect = Point((rect.x + rect.width)/2, (rect.y + rect.height)/2);
+      }
     }
+    message += "{";
+    message += "'x:'";
+    message += ("'" + std::to_string(largest_rect.x) + "'");
+    message += ",";
+    message += "'y:'";
+    message += ("'" + std::to_string(largest_rect.y) + "'");
+    message += "}";
+
+    socket.send_to(boost::asio::buffer(message), receiver_endpoint);
   }
 
   waitKey(0);
