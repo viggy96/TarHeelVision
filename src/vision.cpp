@@ -12,14 +12,13 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/gpu/gpu.hpp>
 
 using namespace cv;
 using namespace std;
 using namespace boost::asio::ip;
 
 VideoCapture camera;
-Mat frame, frame_hsv, frame_thresh;
+UMat frame, frame_hsv, frame_thresh;
 std::string message  = "";
 bool frameExists = false;
 char key;
@@ -40,14 +39,18 @@ double rectangularity(double, Rect);
 double circularity(double, float);
 
 int main(int argc, char *argv[]) {
+  // roborio-TEAM-frc.local:1185/?action=stream
   VideoCapture camera;
   if (argc < 3) {
     cout << "Not enough arguments." << endl;
     cout << "usage: vision camera_stream_address roboRIO_address" << endl;
     return 1;
-  } else if (argc > 1 && boost::starts_with(argv[1], "http://")) {
+  } else if (argc > 1) {
     std::string address;
+    if (!boost::starts_with(argv[1], "http://")) address.append("http://");
     address.append(argv[1]);
+    if (!boost::ends_with(argv[1], "/") && !boost::ends_with(argv[1], "?action=stream"))
+      address.append("/");
     address.append("video?x.mjpeg");
     camera = VideoCapture(address);
   } else {
@@ -100,9 +103,7 @@ int main(int argc, char *argv[]) {
     vector<vector<Point> > contours;
     vector<Vec4i> hierarchy, lines;
 
-    #pragma omp task
     Canny(frame_thresh, canny_output, thresh, thresh_max, 3);
-    #pragma omp task
     findContours(canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
     vector<vector<Point> > contours_poly(contours.size());
@@ -118,13 +119,13 @@ int main(int argc, char *argv[]) {
     message = "";
 
     #pragma omp parallel for simd
-    for (int i = 0; i < contours.size(); i++) {
+    for (auto contour = contours.begin(); contour != contours.end(); contour++) {
       #pragma omp task
-      double area = contourArea(contours[i]);
+      double area = contourArea(*contour);
       if (area < minContourSize) continue;
 
-      Rect rect = boundingRect(contours[i]);
-      bool isRect = (rectangularity(area, rect)) > 80;
+      Rect rect = boundingRect(*contour);
+      bool isRect = (rectangularity(area, rect)) > 75;
       if (isRect && area > largest_area) {
         largest_area = area;
         largest_rect = Point((rect.x + rect.width)/2, (rect.y + rect.height)/2);
@@ -132,10 +133,10 @@ int main(int argc, char *argv[]) {
     }
     message += "{";
     message += "'x':";
-    message += ("'" + std::to_string(largest_rect.x) + "'");
+    message += std::to_string(largest_rect.x);
     message += ",";
     message += "'y':";
-    message += ("'" + std::to_string(largest_rect.y) + "'");
+    message += std::to_string(largest_rect.y);
     message += "}";
 
     socket.send_to(boost::asio::buffer(message), receiver_endpoint);
