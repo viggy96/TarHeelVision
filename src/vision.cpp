@@ -91,9 +91,7 @@ int main(int argc, char *argv[]) {
     createTrackbar("LowV", "Image", &lowV, 255); //Value (0 - 255)
     createTrackbar("HighV", "Image", &highV, 255);
 
-    #pragma omp task
     cvtColor(frame, frame_hsv, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
-    #pragma omp task
     inRange(frame_hsv, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), frame_thresh); //Threshold the image
 
     namedWindow("Thresholded Image", CV_WINDOW_AUTOSIZE);
