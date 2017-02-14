@@ -30,6 +30,7 @@ int thresh_max = 100;
 int lowH = 0, highH = 179;
 int lowS = 0, highS = 255;
 int lowV = 0, highV = 255;
+int darkness = 0;
 int minContourSize = 25;
 double image_t = 0, threshold_t = 0;
 const double PI = 3.14159265358979323846264338328;
@@ -90,6 +91,11 @@ int main(int argc, char *argv[]) {
 
     createTrackbar("LowV", "Image", &lowV, 255); //Value (0 - 255)
     createTrackbar("HighV", "Image", &highV, 255);
+
+    createTrackbar("Darkness", "Image", &darkness, 255);
+
+    #pragma omp task
+    frame.convertTo(frame, -1, 1, -darkness);
 
     cvtColor(frame, frame_hsv, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
     inRange(frame_hsv, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), frame_thresh); //Threshold the image
