@@ -40,7 +40,7 @@ double rectangularity(double, Rect);
 double circularity(double, float);
 
 int main(int argc, char *argv[]) {
-  // roborio-TEAM-frc.local:1185/?action=stream
+  // http://roborio-TEAM-frc.local:1181/?action=stream
   VideoCapture camera;
   if (argc < 3) {
     cout << "Not enough arguments." << endl;
@@ -94,7 +94,6 @@ int main(int argc, char *argv[]) {
 
     createTrackbar("Darkness", "Image", &darkness, 255);
 
-    #pragma omp task
     frame.convertTo(frame, -1, 1, -darkness);
 
     cvtColor(frame, frame_hsv, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
@@ -103,7 +102,7 @@ int main(int argc, char *argv[]) {
     namedWindow("Thresholded Image", CV_WINDOW_AUTOSIZE);
     imshow("Thresholded Image", frame_thresh);
 
-    Mat canny_output, drawing;
+    UMat canny_output, drawing;
     vector<vector<Point> > contours;
     vector<Vec4i> hierarchy, lines;
 
@@ -115,7 +114,7 @@ int main(int argc, char *argv[]) {
     vector<float> radius(contours.size());
     Scalar circle_colour(0, 0, 255);
     Scalar rect_colour(0, 255, 0);
-    drawing = Mat::zeros(canny_output.size(), CV_8UC3);
+    drawing = UMat::zeros(canny_output.size(), CV_8UC3);
 
     double largest_area = -1;
     Point largest_rect;
