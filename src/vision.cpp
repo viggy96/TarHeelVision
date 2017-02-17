@@ -123,7 +123,6 @@ int main(int argc, char *argv[]) {
 
     #pragma omp parallel for simd
     for (auto contour = contours.begin(); contour != contours.end(); contour++) {
-      #pragma omp task
       double area = contourArea(*contour);
       if (area < minContourSize) continue;
 
