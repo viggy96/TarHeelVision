@@ -4,7 +4,8 @@ CC = g++
 # compiler flags:
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
-CFLAGS  = `pkg-config --cflags --libs opencv` -lboost_system -lboost_thread -lpthread -O3 -floop-nest-optimize -floop-parallelize-all -ftree-loop-distribution -std=c++11
+VISION_CFLAGS  = `pkg-config --cflags --libs opencv` -lboost_system -lboost_thread -lpthread -std=c++11
+SERVER_CFLATS = -lboost_system -lboost_thread -pthread
 
 
 # the build target executable:
@@ -14,7 +15,7 @@ TARGET2 = server
 all: $(TARGET)
 
 	$(TARGET): $(TARGET1).cpp
-	$(CC) src/$(TARGET1).cpp -o bin/$(TARGET1) $(CFLAGS)
+	$(CC) src/$(TARGET1).cpp -o bin/$(TARGET1) $(VISION_CFLAGS)
 
 	$(TARGET): $(TARGET2).cpp
-	$(CC) src/$(TARGET2).cpp -o bin/$(TARGET2) $(CFLAGS)
+	$(CC) src/$(TARGET2).cpp -o bin/$(TARGET2) $(SERVER_CFLAGS)

@@ -7,7 +7,6 @@
 #include <thread>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -18,7 +17,7 @@ using namespace std;
 using namespace boost::asio::ip;
 
 VideoCapture camera;
-UMat frame, frame_hsv, frame_thresh;
+Mat frame, frame_hsv, frame_thresh;
 std::string message  = "";
 bool frameExists = false;
 char key;
@@ -94,7 +93,7 @@ int main(int argc, char *argv[]) {
 
     createTrackbar("Darkness", "Image", &darkness, 255);
 
-    frame.convertTo(frame, -1, 1, -darkness);
+    //frame.convertTo(frame, -1, 1, -darkness);
 
     cvtColor(frame, frame_hsv, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
     inRange(frame_hsv, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), frame_thresh); //Threshold the image
@@ -102,7 +101,7 @@ int main(int argc, char *argv[]) {
     namedWindow("Thresholded Image", CV_WINDOW_AUTOSIZE);
     imshow("Thresholded Image", frame_thresh);
 
-    UMat canny_output, drawing;
+    Mat canny_output, drawing;
     vector<vector<Point> > contours;
     vector<Vec4i> hierarchy, lines;
 
@@ -114,14 +113,14 @@ int main(int argc, char *argv[]) {
     vector<float> radius(contours.size());
     Scalar circle_colour(0, 0, 255);
     Scalar rect_colour(0, 255, 0);
-    drawing = UMat::zeros(canny_output.size(), CV_8UC3);
+    drawing = Mat::zeros(canny_output.size(), CV_8UC3);
 
     double largest_area = -1;
     Point largest_rect;
 
     message = "";
 
-    #pragma omp parallel for simd
+    #pragma omp parallel for
     for (auto contour = contours.begin(); contour != contours.end(); contour++) {
       double area = contourArea(*contour);
       if (area < minContourSize) continue;
