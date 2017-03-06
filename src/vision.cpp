@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
       double area = contourArea(contours[i]);
       if (area < minContourSize) continue;
 
-      Rect rect = boundingRect(*contour);
+      Rect rect = boundingRect(contours[i]);
       bool isRect = (rectangularity(area, rect)) > 75;
       if (isRect && area > largest_area) {
         largest_area = area;
