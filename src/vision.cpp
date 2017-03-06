@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
   udp::socket socket(io_service);
   socket.open(udp::v4());
 
-  #pragma omp parallel for
+  //#pragma omp parallel for
   for (;;) {
     frameExists = camera.read(frame);
 
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     createTrackbar("LowV", "Image", &lowV, 255); //Value (0 - 255)
     createTrackbar("HighV", "Image", &highV, 255);
 
-    createTrackbar("Darkness", "Image", &darkness, 255);
+    //createTrackbar("Darkness", "Image", &darkness, 255);
 
     //frame.convertTo(frame, -1, 1, -darkness);
 
@@ -122,6 +122,7 @@ int main(int argc, char *argv[]) {
 
     #pragma omp parallel for
     for (auto contour = contours.begin(); contour != contours.end(); contour++) {
+      #pragma omp task
       double area = contourArea(*contour);
       if (area < minContourSize) continue;
 
