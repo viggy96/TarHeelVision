@@ -5,7 +5,7 @@ CC = g++
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
 VISION_CFLAGS  = `pkg-config --cflags --libs opencv` -lboost_system -lboost_thread -lpthread -std=c++11
-SERVER_CFLATS = -lboost_system -lboost_thread -pthread
+SERVER_CFLAGS = -lboost_system -lboost_thread -pthread
 
 
 # the build target executable:
