@@ -121,9 +121,9 @@ int main(int argc, char *argv[]) {
     message = "";
 
     #pragma omp parallel for
-    for (auto contour = contours.begin(); contour != contours.end(); contour++) {
+    for (int i = 0; i < contours.size(); i++) {
       #pragma omp task
-      double area = contourArea(*contour);
+      double area = contourArea(contours[i]);
       if (area < minContourSize) continue;
 
       Rect rect = boundingRect(*contour);
